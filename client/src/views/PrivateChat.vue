@@ -118,6 +118,7 @@ export default {
     //发送信息
     sendMessage() {
       if (this.inputMsg.trim() == "") return;
+      
       // if (!this.isMyFriend) {
       //   console.log("isnotMyFriend");
       //   // this.$message({
@@ -149,6 +150,7 @@ export default {
         status: "1", //是否在线 0为不在线 1为在线
         time: Date.parse(new Date()) / 1000, //时间
       };
+      console.log("test: ", data)
       // socket.emit("sendPrivateMsg", data);
       this.$socket.emit("sendPrivateMsg", data);
       this.$store.commit("updateListMutation", data);
@@ -185,7 +187,10 @@ export default {
       // this.sockets.removeAllListeners("getPrivateMsg");
       this.sockets.subscribe("getPrivateMsg", (data) => {
         console.log("聊天内获取私聊消息AAAAAAAAAAAAAAA", data);
-        this.privateDetail.push(data);
+        if (this.to_user == data.from_user){
+          this.privateDetail.push(data);
+        }
+
 
         //如果收到的soket信息不是发给自己的 放弃这条soket 没必要了 因为私聊是点对点发送的
         // if(data.to_user != this.fromUserInfo.user_id) return
