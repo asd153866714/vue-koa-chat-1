@@ -38,6 +38,12 @@
             placeholder="密碼"
           />
           <input
+            type="password"
+            class="fadeIn fifth"
+            v-model="rpassword"
+            placeholder="密碼確認"
+          />
+          <input
             type="button"
             @click="register"
             class="fadeIn fourth"
@@ -61,6 +67,7 @@ export default {
     return {
       name: "",
       password: "",
+      rpassword: "",
       message: {
         type: "",
         message: "",
@@ -75,12 +82,14 @@ export default {
   },
   methods: {
     register() {
-      if (this.name !== "" && this.password !== "") {
-        axios
+      if (this.name !== "" && this.password !== "" && this.rpassword !== "") {
+        if (this.password == this.rpassword){
+                 axios
           .post("http://localhost:3000/api/auth/signup", {
             name: this.name,
             password: this.password,
           })
+          
           .then((res) => {
             console.log(res);
             if (res) {
@@ -107,7 +116,14 @@ export default {
             //   type: "error",
             // });
           });
-      } else {
+      }
+      else{
+        this.messageBox.messageBoxEvent = "warn";
+        this.messageBox.visible = true;
+        this.messageBox.message = "確認密碼錯誤";
+      }
+    }
+  else {
         // const message = this.name === "" ? "请输入用户名" : "请输入密码";
         // this.$message({
         //   message: message,
@@ -119,6 +135,10 @@ export default {
       if (value === "register") {
         this.messageBox.visible = false;
         this.$router.push("/login");
+      }
+      if (value === "warn"){
+        this.messageBox.visible = false;
+        this.$router.push("/signup");
       }
     },
   },
