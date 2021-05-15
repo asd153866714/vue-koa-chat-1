@@ -98,6 +98,7 @@
         }
 
         input[type="password"],
+        input[type="passwordConfirm"],
         input[type="text"] {
           background-color: #f6f6f6;
           border: none;
@@ -128,12 +129,20 @@
           background-color: #fff;
           border-bottom: 0.02rem solid #5fbae9;
         }
+        input[type="passwordConfirm"]:focus {
+          background-color: #fff;
+          border-bottom: 0.02rem solid #5fbae9;
+        }
 
         input[type="text"]:placeholder {
           color: #cccccc;
         }
 
         input[type="password"]:placeholder {
+          color: #cccccc;
+        }
+
+        input[type="passwordConfirm"]:placeholder {
           color: #cccccc;
         }
       }

@@ -26,23 +26,69 @@
 
         <form>
           <input
+            v-if="nameHasUse"
             type="text"
             class="fadeIn second"
             v-model="name"
             placeholder="帳號"
           />
           <input
+            v-else
+            style="color: red; border: 1px solid red"
+            type="text"
+            class="fadeIn second"
+            v-model="name"
+            placeholder="帳號"
+          />
+          <br />
+          <label v-if="!nameHasUse" style="color: red; font-size:0.65rem;"
+            >帳號名稱已被使用</label
+          >
+          <input
+            v-if="isPassword"
             type="password"
             class="fadeIn third"
             v-model="password"
             placeholder="密碼"
+            @keyup="validatePassword"
           />
           <input
+            v-else
+            style="color: red; border:1px solid red;"
+            type="password"
+            class="fadeIn third"
+            v-model="password"
+            placeholder="密碼"
+            @keyup="validatePassword"
+          />
+          <br />
+          <label v-if="isPassword" style="color: gray; font-size:0.65rem;">
+            請混合使用 8 個字元以上的英文字母、數字</label
+          >
+          <label v-else style="color: red; font-size:0.65rem;"
+            >請混合使用 8 個字元以上的英文字母、數字</label
+          >
+          <input
+            v-if="passwordConfirm"
             type="password"
             class="fadeIn fifth"
-            v-model="rpassword"
+            v-model="confirm_password"
             placeholder="密碼確認"
+            @keyup="confirmPassword"
           />
+          <input
+            v-else
+            type="password"
+            class="fadeIn fifth"
+            v-model="confirm_password"
+            placeholder="密碼確認"
+            @keyup="confirmPassword"
+            style="color: red; border: 1px solid red"
+          />
+          <br />
+          <label v-if="!passwordConfirm" style="color: red; font-size:0.65rem;"
+            >確認密碼錯誤</label
+          >
           <input
             type="button"
             @click="register"
@@ -67,7 +113,10 @@ export default {
     return {
       name: "",
       password: "",
-      rpassword: "",
+      isPassword: true,
+      confirm_password: "",
+      passwordConfirm: true,
+      nameHasUse: true,
       message: {
         type: "",
         message: "",
@@ -82,48 +131,48 @@ export default {
   },
   methods: {
     register() {
-      if (this.name !== "" && this.password !== "" && this.rpassword !== "") {
-        if (this.password == this.rpassword){
-                 axios
-          .post("http://localhost:3000/api/auth/signup", {
-            name: this.name,
-            password: this.password,
-          })
-          
-          .then((res) => {
-            console.log(res);
-            if (res) {
-              if (res.status === 201) {
-                //弹窗
-                this.messageBox.messageBoxEvent = "register";
-                this.messageBox.visible = true;
-                this.messageBox.message = "您已註冊成功";
-              } else {
-                // this.$message({
-                //   message: res.data.message,
-                //   type: "error",
-                // });
+      if (
+        this.name !== "" &&
+        this.password !== "" &&
+        this.confirm_password !== ""
+      ) {
+        if (this.isPassword == true && this.passwordConfirm == true) {
+          axios
+            .post("http://localhost:3000/api/auth/signup", {
+              name: this.name,
+              password: this.password,
+            })
+
+            .then((res) => {
+              console.log(res);
+              if (res) {
+                if (res.status === 201) {
+                  //弹窗
+                  this.passwordConfirm = true;
+                  this.messageBox.messageBoxEvent = "register";
+                  this.messageBox.visible = true;
+                  this.messageBox.message = "您已註冊成功";
+                } else {
+                  // this.$message({
+                  //   message: res.data.message,
+                  //   type: "error",
+                  // });
+                }
               }
-            }
-          })
-          .catch((err) => {
-            console.log(err);
-            console.log(err.response);
-            this.message.type = "error";
-            this.message.message = err.response.data;
-            // this.$message({
-            //   message: "服务器出错啦",
-            //   type: "error",
-            // });
-          });
-      }
-      else{
-        this.messageBox.messageBoxEvent = "warn";
-        this.messageBox.visible = true;
-        this.messageBox.message = "確認密碼錯誤";
-      }
-    }
-  else {
+            })
+            .catch((err) => {
+              console.log(err);
+              console.log(err.response);
+              this.message.type = "error";
+              this.message.message = err.response.data;
+              this.nameHasUse = false;
+              // this.$message({
+              //   message: "服务器出错啦",
+              //   type: "error",
+              // });
+            });
+        }
+      } else {
         // const message = this.name === "" ? "请输入用户名" : "请输入密码";
         // this.$message({
         //   message: message,
@@ -131,14 +180,25 @@ export default {
         // });
       }
     },
+    validatePassword() {
+      let reg = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+      if (this.password != "" && !reg.test(this.password)) {
+        this.isPassword = false;
+      } else {
+        this.isPassword = true;
+      }
+    },
+    confirmPassword() {
+      if (this.password != this.confirm_password) {
+        this.passwordConfirm = false;
+      } else {
+        this.passwordConfirm = true;
+      }
+    },
     confirm(value) {
       if (value === "register") {
         this.messageBox.visible = false;
         this.$router.push("/login");
-      }
-      if (value === "warn"){
-        this.messageBox.visible = false;
-        this.$router.push("/signup");
       }
     },
   },
