@@ -2,7 +2,7 @@
   <div class="wrapper">
     <the-header :currentTab="currentTab"></the-header>
     <div class="main">
-      <!-- <h1>123</h1> -->
+      <h1>123</h1>
       <ul>
         <li
           v-for="data in msgListGetter"
@@ -42,6 +42,9 @@
 
 <script>
 import { mapGetters } from "vuex";
+import axios from "axios";
+const token = localStorage.getItem("token");
+
 export default {
   // name: 'message',
   sockets: {
@@ -66,6 +69,13 @@ export default {
           : `/group_chat/${chatId}`;
       this.$router.push(path);
     },
+    getMsgList() {
+      axios.get("http://localhost:3000/api/message_list", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    },
     // 获取私聊和群的消息
     getMsgBySocket() {
       // socket.removeAllListeners("getPrivateMsg");
@@ -87,6 +97,7 @@ export default {
       this.$store.dispatch("msgListAction");
       this.$store.commit("firstLoadMutation", false);
     }
+    this.getMsgList();
     this.getMsgBySocket();
   },
 };

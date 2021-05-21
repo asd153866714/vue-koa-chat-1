@@ -1,4 +1,5 @@
 const Message = require("../models/message");
+const PrivateLatest = require("../models/privateLatest");
 
 /**
  * 获取私聊相关内容
@@ -61,6 +62,35 @@ let savePrivateMsg = async (ctx) => {
       time: time,
     });
     await newMessage.save();
+
+    // PrivateLatest 儲存最新一筆資料
+    await PrivateLatest.findOneAndUpdate(
+      {
+        userId: from_user,
+        withUserId: to_user,
+      },
+      {
+        messageId: newMessage._id,
+      },
+      {
+        new: true,
+        upsert: true,
+      }
+    );
+
+    await PrivateLatest.findOneAndUpdate(
+      {
+        userId: to_user,
+        withUserId: from_user,
+      },
+      {
+        messageId: newMessage._id,
+      },
+      {
+        new: true,
+        upsert: true,
+      }
+    );
 
     console.log("儲存訊息成功");
     ctx.status = 200;

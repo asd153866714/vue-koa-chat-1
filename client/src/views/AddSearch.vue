@@ -84,7 +84,7 @@ export default {
     },
     //找人
     findPeople(username) {
-      console.log(token);
+      console.log("JWT Token: ", token);
       axios
         .get("http://localhost:3000/api/find_people", {
           params: {

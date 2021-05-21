@@ -7,27 +7,30 @@
       :chatTitle="someOneInfoGetter.name"
     ></the-header>
     <div class="main">
-      <ul>
-        <li v-for="item in privateDetail" :key="item.id">
-          <chat-item
-            v-if="fromUserInfo.user_id === item.from_user"
-            :href="item.from_user"
-            :img="item.avator"
-            me="true"
-            :msg="item.message"
-            :name="item.name"
-            :time="item.time"
-          ></chat-item>
-          <chat-item
-            v-else
-            :img="item.avator"
-            :msg="item.message"
-            :href="item.from_user"
-            :name="item.name"
-            :time="item.time"
-          ></chat-item>
-        </li>
-      </ul>
+      <div class="messages" ref="messages">
+        <ul>
+          <li v-for="item in privateDetail" :key="item.id">
+            <chat-item
+              v-if="fromUserInfo.user_id === item.from_user"
+              :href="item.from_user"
+              :img="item.avator"
+              me="true"
+              :msg="item.message"
+              :name="item.name"
+              :time="item.time"
+            ></chat-item>
+            <chat-item
+              v-else
+              :img="item.avator"
+              :msg="item.message"
+              :href="item.from_user"
+              :name="item.name"
+              :time="item.time"
+            ></chat-item>
+          </li>
+        </ul>
+      </div>
+
       <div class="input-msg">
         <textarea
           v-model="inputMsg"
@@ -78,7 +81,7 @@ export default {
   },
   watch: {
     privateDetail() {
-      this.refresh();
+      this.scrollToBottom();
     },
   },
   methods: {
@@ -118,7 +121,7 @@ export default {
     //发送信息
     sendMessage() {
       if (this.inputMsg.trim() == "") return;
-      
+
       // if (!this.isMyFriend) {
       //   console.log("isnotMyFriend");
       //   // this.$message({
@@ -150,7 +153,7 @@ export default {
         status: "1", //是否在线 0为不在线 1为在线
         time: Date.parse(new Date()) / 1000, //时间
       };
-      console.log("test: ", data)
+      console.log("test: ", data);
       // socket.emit("sendPrivateMsg", data);
       this.$socket.emit("sendPrivateMsg", data);
       this.$store.commit("updateListMutation", data);
@@ -187,10 +190,9 @@ export default {
       // this.sockets.removeAllListeners("getPrivateMsg");
       this.sockets.subscribe("getPrivateMsg", (data) => {
         console.log("聊天内获取私聊消息AAAAAAAAAAAAAAA", data);
-        if (this.to_user == data.from_user){
+        if (this.to_user == data.from_user) {
           this.privateDetail.push(data);
         }
-
 
         //如果收到的soket信息不是发给自己的 放弃这条soket 没必要了 因为私聊是点对点发送的
         // if(data.to_user != this.fromUserInfo.user_id) return
@@ -244,6 +246,12 @@ export default {
       setTimeout(() => {
         window.scrollTo(0, document.body.scrollHeight + 10000);
       }, 0);
+    },
+    // 捲到最底部
+    scrollToBottom() {
+      this.$refs.messages.scrollTo(0, this.$refs.messages.scrollHeight);
+      console.log(this.$refs.messages.scrollHeight);
+      console.log(this.$refs.messages.scrollTop);
     },
   },
   mounted() {

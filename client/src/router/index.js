@@ -11,7 +11,6 @@ import PrivateChat from "../views/PrivateChat.vue";
 import News from "../views/News.vue";
 import NewsDetail from "../views/NewsDetail.vue";
 
-
 Vue.use(VueRouter);
 
 const routes = [
@@ -65,12 +64,10 @@ const routes = [
     component: News,
   },
   {
-    path: '/newsdetail',
-    name: 'newsdetail',
+    path: "/newsdetail",
+    name: "newsdetail",
     component: NewsDetail,
   },
-  
-  
 ];
 
 const router = new VueRouter({
@@ -81,19 +78,56 @@ const router = new VueRouter({
 
 // router protect
 router.beforeEach((to, from, next) => {
-  if (!localStorage.token) {
+  console.log(localStorage);
+
+  // 判斷是否有 token，是否登入
+  if (localStorage.token) {
+    // 判斷 token 是否過期
+    if (localStorage.expire - new Date().getTime() > 0) {
+      // 判斷目標路由是否為登入或註冊，避免二次登入
+      if (to.path === "/login" || to.path === "/signup") {
+        next("/message");
+      } else {
+        next();
+      }
+    } else {
+      localStorage.removeItem("token");
+      localStorage.removeItem("userInfo");
+      localStorage.removeItem("expire");
+      next("/login");
+    }
+  } else {
     if (to.path === "/login" || to.path === "/signup") {
       next();
     } else {
       next("/login");
     }
-  } else {
-    if (to.path === "/login" || to.path === "/signup") {
-      next("/message");
-    } else {
-      next();
-    }
   }
+
+  // if (!localStorage.token) {
+  //   if (to.path === "/login" || to.path === "/signup") {
+  //     next();
+  //   } else {
+  //     next("/login");
+  //   }
+  // } else {
+  //   if (to.path === "/login" || to.path === "/signup") {
+  //     next("/message");
+  //   } else {
+  //     next();
+  //   }
+  // }
+
+  // 判斷前端 token 是否過期
+  // if (localStorage.expire - new Date().getTime() > 0) {
+  //   console.log("aslkdajlkdlksajl");
+  //   next();
+  // } else {
+  //   localStorage.removeItem("token");
+  //   localStorage.removeItem("userInfo");
+  //   localStorage.removeItem("expire");
+  //   next("/login");
+  // }
 });
 
 export default router;
