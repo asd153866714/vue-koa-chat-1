@@ -90,7 +90,7 @@ export default {
           .then((res) => {
             if (res.status === 200) {
               console.log(res.data);
-              //保存soket.io
+              // 保存soket.io
               // socket.emit("login", res.data.userInfo.user_id);
               this.$socket.emit("login", res.data.userInfo.id);
               localStorage.setItem("token", res.data.token);
@@ -98,6 +98,8 @@ export default {
                 "userInfo",
                 JSON.stringify(res.data.userInfo)
               );
+              // 設置 token 時效，毫秒為單位
+              localStorage.setItem("expire", res.data.expire);
               //弹窗
               this.messageBox.messageBoxEvent = "login";
               this.messageBox.visible = true;

@@ -10,8 +10,7 @@ module.exports = async (ctx, next) => {
   let decodedToken;
 
   decodedToken = jwt.verify(token, secret);
-  decodedToken = jwt.verify(token, secret);
-
+  console.log("JWT Token:", decodedToken);
   // try {
   //   decodedToken = jwt.verify(token, secret);
   // } catch (error) {

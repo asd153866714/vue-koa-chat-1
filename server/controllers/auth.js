@@ -40,13 +40,14 @@ class authController {
             userId: hasUser._id.toString(),
           },
           secret,
-          { expiresIn: "5h" }
+          { expiresIn: "1h" }
         );
 
         ctx.status = 200;
         ctx.body = {
           message: "Login success.",
           token: token.toString(),
+          expire: new Date().getTime() + 3600 * 1000,
           userInfo: {
             name: hasUser.name,
             id: hasUser._id,
