@@ -2,7 +2,6 @@
   <div class="wrapper">
     <the-header :currentTab="currentTab"></the-header>
     <div class="main">
-      <h1>123</h1>
       <ul>
         <li
           v-for="data in msgListGetter"
@@ -69,15 +68,15 @@ export default {
           : `/group_chat/${chatId}`;
       this.$router.push(path);
     },
-    getMsgList() {
-      axios.get("http://localhost:3000/api/message_list", {
+    getRoomList() {
+      axios.get("http://localhost:3000/api/room_list", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
     },
     // 获取私聊和群的消息
-    getMsgBySocket() {
+    getRoomListBySocket() {
       // socket.removeAllListeners("getPrivateMsg");
       // socket.removeAllListeners("getGroupMsg");
       // socket.on("getPrivateMsg", (data) => {
@@ -93,12 +92,12 @@ export default {
     },
   },
   created() {
-    if (this.$store.state.firstLoad) {
-      this.$store.dispatch("msgListAction");
-      this.$store.commit("firstLoadMutation", false);
-    }
-    this.getMsgList();
-    this.getMsgBySocket();
+    // if (this.$store.state.firstLoad) {
+    //   this.$store.dispatch("msgListAction");
+    //   this.$store.commit("firstLoadMutation", false);
+    // }
+    this.getRoomList();
+    // this.getRoomListBySocket();
   },
 };
 </script>

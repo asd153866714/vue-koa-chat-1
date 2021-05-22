@@ -2,7 +2,7 @@ const Router = require("koa-router");
 
 const authCtrl = require("../controllers/auth");
 const userInfoCtrl = require("../controllers/userInfo");
-const msgListCtrl = require("../controllers/msgList");
+const roomListCtrl = require("../controllers/roomList");
 const privateChatCtrl = require("../controllers/privateChat");
 // const friendsCtrl = require("../controllers/friends");
 
@@ -16,7 +16,7 @@ router
   .post("/auth/signup", authCtrl.postSignup) // 註冊
   .post("/auth/login", authCtrl.postLogin) // 登入
   .post("/auth/logout", authCtrl.postLogout) // 登出
-  .get("/message_list", isLogin, msgListCtrl.getMsgList) // 首頁訊息列表
+  .get("/room_list", isLogin, roomListCtrl.getRoomList) // 首頁訊息列表
   .get("/private_detail", isLogin, privateChatCtrl.getPrivateDetail) // 取得單人聊天室訊息紀錄
   .post("/private_save_msg", isLogin, privateChatCtrl.savePrivateMsg) // 儲存單人聊天訊息
   .get("/user_info", isLogin, userInfoCtrl.getUserInfo) // 取得使用者資料

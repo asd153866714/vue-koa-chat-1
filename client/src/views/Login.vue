@@ -135,7 +135,7 @@ export default {
       console.log("confirm", value);
       if (value === "login") {
         this.messageBox.visible = false;
-        this.$router.push("/message");
+        this.$router.push("/");
       }
     },
   },

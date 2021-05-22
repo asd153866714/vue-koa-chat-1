@@ -1,7 +1,7 @@
 // const MsgList = require("../models/message");
 const PrivateLatest = require("../models/privateLatest");
 
-let getMsgList = async (ctx) => {
+let getRoomList = async (ctx) => {
   try {
     const userId = ctx.state.userId;
     const privateList = await PrivateLatest.find({
@@ -34,5 +34,5 @@ let getMsgList = async (ctx) => {
 // };
 
 module.exports = {
-  getMsgList,
+  getRoomList,
 };
