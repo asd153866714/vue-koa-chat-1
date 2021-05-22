@@ -1,7 +1,7 @@
 <template>
   <!--  主页面底部 -->
   <div class="footer">
-    <router-link class="item" to="message">
+    <router-link class="item" to="room_list">
       <svg class="icon" aria-hidden="true">
         <use v-show="currentTab === 1" xlink:href="#icon-messagefill"></use>
         <use v-show="currentTab !== 1" xlink:href="#icon-message1"></use>
@@ -13,7 +13,7 @@
         <use v-show="currentTab !== 2" xlink:href="#icon-zhinenghua"></use>
       </svg>
     </router-link>
-    <router-link class="item" to="message">
+    <router-link class="item" to="room_list">
       <!-- <router-link v-else class="item " to="contact_list"> -->
       <svg class="icon" aria-hidden="true">
         <use v-show="currentTab === 3" xlink:href="#icon-group_fill"></use>

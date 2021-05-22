@@ -4,7 +4,7 @@ import Login from "../views/Login.vue";
 import Signup from "../views/Signup.vue";
 import Setting from "../views/Setting.vue";
 import UserInfo from "../views/UserInfo.vue";
-import Message from "../views/Message.vue";
+import RoomList from "../views/RoomList.vue";
 import Add from "../views/Add.vue";
 import AddSearch from "../views/AddSearch.vue";
 import PrivateChat from "../views/PrivateChat.vue";
@@ -17,7 +17,7 @@ const routes = [
   {
     path: "/",
     name: "Home",
-    component: Message,
+    component: RoomList,
   },
   {
     path: "/login",
@@ -28,8 +28,8 @@ const routes = [
     component: Signup,
   },
   {
-    path: "/message",
-    component: Message,
+    path: "/room_list",
+    component: RoomList,
   },
   {
     //加人或进群
@@ -86,7 +86,7 @@ router.beforeEach((to, from, next) => {
     if (localStorage.expire - new Date().getTime() > 0) {
       // 判斷目標路由是否為登入或註冊，避免二次登入
       if (to.path === "/login" || to.path === "/signup") {
-        next("/message");
+        next("/");
       } else {
         next();
       }
