@@ -49,7 +49,6 @@
 import axios from "axios";
 import { mapGetters } from "vuex";
 import { toNormalTime } from "../utils/transformTime";
-const token = localStorage.getItem("token");
 
 export default {
   components: {},
@@ -87,6 +86,8 @@ export default {
   methods: {
     //获取数据库的消息
     getPrivateMsg() {
+      const token = localStorage.getItem("token");
+
       axios
         .get("http://localhost:3000/api/private_detail", {
           params: {
@@ -98,8 +99,6 @@ export default {
           },
         })
         .then((res) => {
-          console.log(res);
-          console.log("msgList", res.data.privateDetail);
           if (res.status === 200) {
             this.privateDetail = res.data.privateDetail;
             if (this.privateDetail.length == 0) return;
@@ -160,6 +159,8 @@ export default {
     },
     //用数据库存消息
     saveMsgByDB() {
+      const token = localStorage.getItem("token");
+
       const data = {
         from_user: this.fromUserInfo.user_id, //自己的id
         to_user: this.toUserInfo.to_user, //对方的id
@@ -249,9 +250,10 @@ export default {
     },
     // 捲到最底部
     scrollToBottom() {
-      this.$refs.messages.scrollTo(0, this.$refs.messages.scrollHeight);
-      console.log(this.$refs.messages.scrollHeight);
-      console.log(this.$refs.messages.scrollTop);
+      this.$refs.messages.scrollTop = this.$refs.messages.scrollHeight;
+      // this.$refs.messages.scrollTo(0, this.$refs.messages.scrollHeight);
+      console.log("scrollHeight:", this.$refs.messages.scrollHeight);
+      console.log("scrollTop:", this.$refs.messages.scrollTop);
     },
   },
   mounted() {
@@ -260,7 +262,9 @@ export default {
     // this.isFriend();
     // this.resetUnred();
     this.getPrivateMsg();
+
     this.getMsgBySocket();
+
     this.$store.dispatch("someOneInfoAction", this.toUserInfo.to_user);
   },
 };

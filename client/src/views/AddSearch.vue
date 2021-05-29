@@ -57,7 +57,6 @@
 
 <script>
 import axios from "axios";
-const token = localStorage.getItem("token");
 
 export default {
   components: {},
@@ -84,6 +83,8 @@ export default {
     },
     //找人
     findPeople(username) {
+      const token = localStorage.getItem("token");
+
       console.log("JWT Token: ", token);
       axios
         .get("http://localhost:3000/api/find_people", {

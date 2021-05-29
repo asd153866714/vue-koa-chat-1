@@ -2,7 +2,20 @@ const Message = require("../models/message");
 const PrivateLatest = require("../models/privateLatest");
 
 /**
- * 获取私聊相关内容
+ *
+ * @param {*} ctx
+ * @param
+ * @returns
+ */
+
+/**
+ *
+ * @param {dasd} ctx
+ * @
+ */
+
+/**
+ * 取得單人聊天室訊息
  * @param  to_user 信息发送者的id
  * @param  from_user 信息接收者的id
  * @return  from_user  此条信息的发送者
@@ -24,14 +37,12 @@ let getPrivateDetail = async (ctx) => {
     ],
   }).sort({ time: 1 });
 
-  privateDetail;
-
   // const res1 = await Message.find({ from: from_user, to: to_user });
   // const res2 = await Message.find({ from: to_user, to: from_user });
   // const privateDetail = res1.concat(res2);
-  privateDetail.forEach((e) => {
-    console.log(e.time);
-  });
+  // privateDetail.forEach((e) => {
+  //   console.log(e.time);
+  // });
 
   ctx.body = {
     privateDetail: privateDetail,
@@ -39,7 +50,7 @@ let getPrivateDetail = async (ctx) => {
 };
 
 /**
- * 存储私聊聊信息
+ * 儲存單人聊天室訊息
  * @param   to_user  信息发送者的id
  * @param   from_user 信息接收者的id
  * @param   message  消息

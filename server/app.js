@@ -89,7 +89,7 @@ io.on("connection", (socket) => {
     const user = users.find((user) => user.id === socket.id);
     const index = users.indexOf(user);
     users.splice(index, 1);
-    console.log(users);
+    // console.log(users);
   });
 });
 

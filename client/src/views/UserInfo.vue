@@ -116,7 +116,6 @@
 <script>
 import axios from "axios";
 import { mapGetters } from "vuex";
-const token = localStorage.getItem("token");
 
 export default {
   data() {
@@ -151,6 +150,8 @@ export default {
         this.userInfo = this.myInfo;
         return;
       }
+      const token = localStorage.getItem("token");
+
       axios
         .get("http://localhost:3000/api/user_info", {
           params: {

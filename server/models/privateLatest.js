@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const user = require("./user");
 const Schema = mongoose.Schema;
 
 const privateLatestSchema = new Schema({
@@ -7,11 +8,13 @@ const privateLatestSchema = new Schema({
     required: true,
   },
   withUserId: {
-    type: String,
+    type: Schema.Types.ObjectId,
+    ref: "User",
     required: true,
   },
   messageId: {
-    type: String,
+    type: Schema.Types.ObjectId,
+    ref: "Message",
     required: true,
   },
 });

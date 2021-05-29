@@ -4,19 +4,34 @@
     <div class="main">
       <ul>
         <li
+          v-for="data in roomList"
+          :key="data.id"
+          @click="enterChat(data.withUserId._id)"
+        >
+          <h2>{{ data.withUserId.name + " / " }}</h2>
+          <h3>{{ data.messageId.message + " / " }}</h3>
+          <span>{{
+            new Date(data.messageId.time * 1000)
+              .toISOString()
+              .substring(0, 10) + " / "
+          }}</span>
+        </li>
+      </ul>
+      <!-- <ul>
+        <li
           v-for="data in msgListGetter"
           :key="data.id"
           @click="enterChat(data.type, data.id)"
         >
           <a v-if="data.type === 'group'" href=""
-            ><img :src="data.group_avator" alt="群头像" class="img" /><span
+            ><img :src="data.group_avator" class="img" /><span
               class="group-unread"
               v-if="data.unread"
               >{{ data.unread }}</span
             ></a
           >
           <a v-if="data.type === 'private'" href=""
-            ><img :src="data.avator" alt="用户头像" class="img" /><span
+            ><img :src="data.avator" class="img" /><span
               class="private-unread"
               v-if="data.unread"
               >{{ data.unread }}</span
@@ -32,7 +47,7 @@
             <div class="message">{{ data.message }}</div>
           </div>
         </li>
-      </ul>
+      </ul> -->
     </div>
 
     <the-footer :currentTab="currentTab"></the-footer>
@@ -41,8 +56,8 @@
 
 <script>
 import { mapGetters } from "vuex";
+console.log("XXXXXXXXXXXXXXX");
 import axios from "axios";
-const token = localStorage.getItem("token");
 
 export default {
   // name: 'message',
@@ -54,6 +69,7 @@ export default {
   data() {
     return {
       currentTab: 1,
+      roomList: [],
     };
   },
   components: {},
@@ -61,19 +77,30 @@ export default {
     ...mapGetters(["msgListGetter"]),
   },
   methods: {
-    enterChat(chatType, chatId) {
-      const path =
-        chatType == "private"
-          ? `/private_chat/${chatId}`
-          : `/group_chat/${chatId}`;
+    enterChat(chatId) {
+      // const path =
+      //   chatType == "private"
+      //     ? `/private_chat/${chatId}`
+      //     : `/group_chat/${chatId}`;
+      // this.$router.push(path);
+      const path = `/private_chat/${chatId}`;
       this.$router.push(path);
     },
     getRoomList() {
-      axios.get("http://localhost:3000/api/room_list", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const token = localStorage.getItem("token");
+      axios
+        .get("http://localhost:3000/api/room_list", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((res) => {
+          console.log("RoomList:", res.data.roomList);
+          this.roomList = res.data.roomList;
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     },
     // 获取私聊和群的消息
     getRoomListBySocket() {
@@ -109,7 +136,7 @@ export default {
   .main {
     height: 90%;
     ul {
-      background-color: black;
+      // background-color: black;
       background-repeat:no-repeat {
         background-repeat: no-repeat;
       }
