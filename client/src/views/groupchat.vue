@@ -1,167 +1,246 @@
 <template>
-    <div class="wrapper">
-        <the-header
-            goback="true"
-            userInfo="true"
-            :chatTitle="groupchat"
-        ></the-header>
-        <ul>
-      <li v-for="item in privateDetail" :key="item.id">
-        <chat-item
-          v-if="fromUserInfo.user_id === item.from_user"
-          :href="item.from_user"
-          :img="item.avator"
-          me="true"
-          :msg="item.message"
-          :name="item.name"
-          :time="item.time"
-        ></chat-item>
-        <chat-item
-          v-else
-          :img="item.avator"
-          :msg="item.message"
-          :href="item.from_user"
-          :name="item.name"
-          :time="item.time"
-        ></chat-item>
-      </li>
-    </ul>
-    <div class="input-msg">
-      <textarea
-        v-model="inputMsg"
-        @keydown.enter.prevent="sendMessage"
-        ref="message"
-      ></textarea>
-      <p class="btn" :class="{ enable: inputMsg != '' }" @click="sendMessage">
-        {{ btnInfo }}
-      </p>
-    </div>
-    </div>
-</template>
+  <v-container class="grey lighten-3" style="height:100vh;">
+    <v-row no-gutters style="height:100%;">
+      <base-dialog
+        :type="dialog.type"
+        :show="dialog.show"
+        @closeDialog="closeDialog"
+        @updateRoomList="getRoomList"
+        @updateDialogStatus="updateDialogStatus"
+      ></base-dialog>
 
+      <v-col cols="12" md="4" :class="leftStyle" style="height:100%">
+        <v-card
+          style="height:100%; display: flex; flex-direction: column;"
+          outlined
+          tile
+        >
+          <the-left-header
+            @updateSearchStatus="updateSearchStatus"
+            @updateDialogStatus="updateDialogStatus"
+          ></the-left-header>
+          <left-room-list
+            :isSearching="isSearching"
+            :searchResult="searchResult"
+          ></left-room-list>
+        </v-card>
+      </v-col>
+      <v-col cols="12" md="8" :class="rightStyle" style="height:100%;">
+        <v-card class="chat-card" style="height:100%;" outlined tile>
+          <the-right-header :roomName="groupInfoGetter.name"></the-right-header>
+          <div class="msg-list" ref="messages">
+            <v-list subheader>
+              <v-list-item
+                v-for="item in groupChatDetail"
+                :key="item._id"
+                class="d-flex"
+              >
+                <v-list-item-avatar
+                  v-if="!item.fromSys"
+                  :color="item.from.avatarColor"
+                  size="50"
+                  class="align-self-start"
+                >
+                  <span class="white--text title">
+                    {{ item.from.avatarName }}
+                  </span>
+                </v-list-item-avatar>
+
+                <v-list-item-content>
+                  <v-list-item-title
+                    v-if="!item.fromSys"
+                    class="font-weight-bold mb-2"
+                    >{{ item.from.name }}</v-list-item-title
+                  >
+                  <v-card color="rounded-xl rounded-tl-0" outlined>
+                    <v-card-text class="text-body-1">
+                      {{ item.message }}
+                    </v-card-text>
+                  </v-card>
+                </v-list-item-content>
+
+                <v-list-item-action class="align-self-end">
+                  <v-list-item-action-text
+                    v-text="item.time"
+                  ></v-list-item-action-text>
+                </v-list-item-action>
+              </v-list-item>
+            </v-list>
+          </div>
+
+          <v-form
+            v-if="isGroupMemberGetter"
+            class="input-form blue-grey lighten-5 pa-5"
+          >
+            <v-textarea
+              outlined
+              class="input-textarea"
+              name="input-7-4"
+              label="Outlined textarea"
+              hide-details="auto"
+              rows="1"
+              prepend-icon="mdi-paperclip"
+              append-outer-icon="mdi-send"
+              @click:prepend="uploadFile"
+              @click:append-outer="sendMessage"
+              @keydown.enter.exact.prevent="sendMessage"
+              v-model="inputMsg"
+            ></v-textarea>
+          </v-form>
+          <div v-else class="pa-5">
+            <v-btn block color="secondary" @click="joinGroup">
+              Join Group
+            </v-btn>
+          </div>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
+</template>
 <script>
 import axios from "axios";
 import { mapGetters } from "vuex";
 import { toNormalTime } from "../utils/transformTime";
-const token = localStorage.getItem("token");
+import TheRightHeader from "../components/TheRightHeader.vue";
+import LeftRoomList from "../components/LeftRoomList.vue";
 
 export default {
-  components: {},
-  sockets: {
-    connect: function() {
-      console.log("socket to notification channel connected");
-    },
-  },
+  components: { TheRightHeader, LeftRoomList },
+  // sockets: {
+  //   connect: function() {
+  //     console.log("socket to notification channel connected");
+  //   },
+  // },
   data() {
     return {
+      isEnterChat: true,
+      roomList: [],
+      groupChatDetail: [],
       inputMsg: "",
-      privateDetail: [], //私聊相关
-      toUserInfo: {
-        //被私聊者
-        to_user: "",
-        avator: "",
-        sex: "",
-        place: "",
-        status: "",
+      fromUserInfo: {},
+      toGroupInfo: {},
+      toUserInfo: {},
+      searchKeyword: "",
+      isSearching: false,
+      dialog: {
+        show: false,
+        type: "",
+        title: "",
+        content: "",
       },
-      isMyFriend: false, //他是否是我的好友
-      isHisFriend: false, //我是否是他的好友
-      fromUserInfo: {}, //用户自己
-      btnInfo: "發送",
     };
   },
-  computed: {
-    ...mapGetters(["someOneInfoGetter"]),
-  },
   watch: {
-    privateDetail() {
-      this.refresh();
+    // $route(to, from) {
+    //   console.log("WATCH route change", from, to);
+    //   this.getGroupMsg(to.params.group_id);
+    //   this.$store.dispatch("groupInfoAction", to.params.group_id);
+    // },
+    searchResult: function(val) {
+      console.log("WWwatch:", val);
     },
   },
+  computed: {
+    leftStyle() {
+      return this.isEnterChat === true ? "hidden-sm-and-down" : "";
+    },
+    rightStyle() {
+      return this.isEnterChat !== true ? "hidden-sm-and-down" : "";
+    },
+    ...mapGetters(["groupInfoGetter", "roomListGetter", "isGroupMemberGetter"]),
+    ...mapGetters({
+      searchResult: "searchResultGetter",
+    }),
+  },
   methods: {
-    //获取数据库的消息
-    getPrivateMsg() {
+    getRoomList() {
+      this.$store.dispatch("roomListAction");
+    },
+    updateSearchStatus(val) {
+      this.searchKeyword = val;
+      this.isSearching = val !== null && val !== "" ? true : false;
+      console.log("isSearching:", this.isSearching);
+      console.log("searchKeyword:", this.searchKeyword);
+      if (this.isSearching == true) {
+        // this.findPeople(val);
+        this.$store.dispatch("searchResultAction", val);
+      }
+    },
+    enterChat(type, chatId) {
+      let path;
+      this.isSearching = false;
+      this.searchKeyword = [];
+      if (type === "group") {
+        path = `/group_chat/${chatId}`;
+      } else if (type === "private") {
+        path = `/private_chat/${chatId}`;
+      }
+      if (path === this.$route.path) return;
+      this.$router.push({ path: path });
+    },
+    updateDialogStatus(data) {
+      console.log("updateDialogStatus:", data);
+      // this.dialog = data;
+      this.dialog.show = true;
+      this.dialog.type = data;
+      console.log(this.dialog);
+    },
+    closeDialog() {
+      this.dialog.show = false;
+    },
+    // 取得群組訊息紀錄
+    async getGroupMsg(toGroupId) {
+      const token = localStorage.getItem("token");
       axios
-        .get("http://localhost:3000/api/private_detail", {
+        .get("http://localhost:3000/api/group_detail", {
           params: {
-            to_user: this.toUserInfo.to_user,
-            // from_user: this.fromUserInfo.user_id
+            toGroupId: toGroupId,
           },
           headers: {
             Authorization: `Bearer ${token}`,
           },
         })
         .then((res) => {
-          console.log(res);
-          console.log("msgList", res.data.privateDetail);
           if (res.status === 200) {
-            this.privateDetail = res.data.privateDetail;
-            if (this.privateDetail.length == 0) return;
-            this.privateDetail.forEach((element) => {
+            console.log("group msgs from server:", res.data);
+            this.groupChatDetail = res.data.groupChatDetail;
+            if (this.groupChatDetail.length == 0) return;
+            this.groupChatDetail.forEach((element) => {
               element.time = toNormalTime(element.time);
               // element.message = element.message.split(":")[1];
             });
+            console.log("GroupDetails: ", this.groupChatDetail);
           }
         })
         .catch((err) => {
           console.log(err);
-          // const errorMsg = err.response.data.error;
-          // this.$message({
-          //   message: errorMsg,
-          //   type: "error",
-          // });
         });
     },
-    //发送信息
+    // 傳送訊息的事件
     sendMessage() {
+      console.log("sendMessage");
       if (this.inputMsg.trim() == "") return;
-      // if (!this.isMyFriend) {
-      //   console.log("isnotMyFriend");
-      //   // this.$message({
-      //   //   message: "ta不是您的好友，请先加ta为好友",
-      //   //   type: "error",
-      //   // });
-      //   return;
-      // }
-      // if (!this.isHisFriend) {
-      //   console.log("isnoHisFriend");
-      //   // this.$message({
-      //   //   message: "您不是ta的好友，请先加ta为好友",
-      //   //   type: "error",
-      //   // });
-      //   return;
-      // }
-      this.sendMsgBySocket();
-      this.saveMsgByDB();
-    },
-    //用socket发消息
-    sendMsgBySocket() {
-      const data = {
-        from_user: this.fromUserInfo.user_id, //自己的id
-        to_user: this.toUserInfo.to_user, //对方id
-        name: this.fromUserInfo.name, //自己的昵称
-        avator: this.fromUserInfo.avator, //自己的头像
-        message: this.inputMsg, //消息内容
-        type: "private",
-        status: "1", //是否在线 0为不在线 1为在线
-        time: Date.parse(new Date()) / 1000, //时间
+      let data = {
+        from: this.fromUserInfo.id,
+        to: this.toGroupInfo.groupId,
+        message: this.inputMsg,
+        time: Date.parse(new Date()),
       };
-      // socket.emit("sendPrivateMsg", data);
-      this.$socket.emit("sendPrivateMsg", data);
-      this.$store.commit("updateListMutation", data);
+
+      this.sendMsgBySocket(data);
+      // this.saveMsgByDB(data);
+
+      console.log("send Message:", data);
     },
-    //用数据库存消息
-    saveMsgByDB() {
-      const data = {
-        from_user: this.fromUserInfo.user_id, //自己的id
-        to_user: this.toUserInfo.to_user, //对方的id
-        name: this.fromUserInfo.name, //自己的昵称
-        avator: this.fromUserInfo.avator, //自己的头像
-        message: this.inputMsg, //消息内容
-        status: "1", //是否在线 0为不在线 1为在线
-        time: Date.parse(new Date()) / 1000, //时间
-      };
-      // 存此条私聊信息到数据库
+    // 透過 socket.io 傳送訊息
+    sendMsgBySocket(data) {
+      this.$socket.emit("sendGroupMsg", data);
+      console.log("sendGroupMsg");
+      this.inputMsg = "";
+    },
+    // 資料庫儲存訊息
+    saveMsgByDB(data) {
+      const token = localStorage.getItem("token");
       axios
         .post("http://localhost:3000/api/private_save_msg", data, {
           headers: {
@@ -171,85 +250,102 @@ export default {
         .then((res) => {
           console.log(res);
           this.inputMsg = "";
-          // 存此条私聊信息到本地
+          data.avatarColor = this.fromUserInfo.avatarColor;
           data.time = toNormalTime(data.time);
-          console.log("saveMsgByDBdata", data);
-          this.privateDetail.push(data);
+          this.$store.dispatch("roomListAction");
+          console.log("save1");
         });
     },
-    // 获取socket消息
+    // 接收 socket.io 訊息
     getMsgBySocket() {
-      // this.sockets.removeAllListeners("getPrivateMsg");
-      this.sockets.subscribe("getPrivateMsg", (data) => {
-        console.log("聊天内获取私聊消息AAAAAAAAAAAAAAA", data);
-        this.privateDetail.push(data);
-
-        //如果收到的soket信息不是发给自己的 放弃这条soket 没必要了 因为私聊是点对点发送的
-        // if(data.to_user != this.fromUserInfo.user_id) return
-        //如果收到的soket信息不是来自当前聊天者 写入首页信息列表 并return
-        // console.log(data.from_user, '!=', this.toUserInfo.to_user)
-        // 	//soket信息不是来自当前聊天者 vuex添加此条信息 有未读提示
-        if (data.from_user != this.toUserInfo.to_user) {
-          console.log(data, "updateListMutationdata");
-          data.chatOfNow = false;
-          this.$store.commit("updateListMutation", data);
-          return;
-        } else {
-          //soket信息来自当前聊天者 vuex添加此条信息 没未读提示
-          data.chatOfNow = true;
-          this.$store.commit("updateListMutation", data);
+      this.$socket.on("getGroupMsg", (data) => {
+        console.log("CLIENT SOCKET getGroupMsg", data);
+        if (data.to === this.toGroupInfo.groupId) {
+          data.time = toNormalTime(data.time);
+          this.groupChatDetail.push(data);
         }
-        //本地添加此条信息
-        // this.privateDetail.push(data);
+        this.getRoomList();
       });
     },
-    // 查询此用户与我的关系
-    isFriend() {
+    joinGroup() {
+      const token = localStorage.getItem("token");
+      let userId = this.fromUserInfo.id;
+      let groupId = this.toGroupInfo.groupId;
       axios
-        .get("/api/v1/is_friend", {
-          params: {
-            // user_id: this.fromUserInfo.user_id,
-            other_user_id: this.toUserInfo.to_user,
+        .post(
+          "http://localhost:3000/api/join_group",
+          {
+            userId: userId,
+            groupId: groupId,
           },
-        })
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
         .then((res) => {
-          this.isMyFriend =
-            res.data.data.isMyFriend.length !== 0 ? true : false;
-          this.isHisFriend =
-            res.data.data.isHisFriend.length !== 0 ? true : false;
-        })
-        .catch((err) => {
-          console.log(err);
-          // const errorMsg = err.response.data.error;
-          // this.$message({
-          //   message: errorMsg,
-          //   type: "error",
-          // });
+          if (res.status === 200) {
+            console.log("CLIENT join group res:", res.data);
+            // 重新取得 group info 更新狀態
+            this.$store.dispatch("groupInfoAction", res.data.joinGroupId);
+            // 讓 server 端的 socket join 該群組，才能收到加入的訊息並更新 room list
+            this.$socket.emit("joinGroup", res.data.joinGroupId);
+            // 送出使用者加入群組的通知訊息到該群組
+            let data = {
+              to: res.data.joinGroupId,
+              message: `${this.fromUserInfo.name}已加入群組`,
+              time: Date.parse(new Date()),
+              fromSys: true,
+            };
+            this.$socket.emit("sendGroupMsg", data);
+          }
         });
     },
-    //将未读信息归零
-    resetUnred() {
-      this.$store.commit("resetUnredMutation", this.toUserInfo.to_user);
+    updateSocketId(userId) {
+      console.log("updateSocketId");
+      this.$socket.emit("update", userId);
     },
-    // 消息置底
-    refresh() {
-      setTimeout(() => {
-        window.scrollTo(0, document.body.scrollHeight + 10000);
-      }, 0);
+    uploadFile() {
+      console.log("test");
+    },
+    scrollToBottom() {
+      this.$refs.messages.scrollTop = this.$refs.messages.scrollHeight;
     },
   },
+  created() {},
   mounted() {
-    this.toUserInfo.to_user = this.$route.params.user_id;
+    console.log("MOUINETETETD");
+    this.toGroupInfo.groupId = this.$route.params.group_id;
     this.fromUserInfo = JSON.parse(localStorage.getItem("userInfo"));
-    // this.isFriend();
-    // this.resetUnred();
-    this.getPrivateMsg();
+    this.getRoomList();
+    this.getGroupMsg(this.$route.params.group_id);
     this.getMsgBySocket();
-    this.$store.dispatch("someOneInfoAction", this.toUserInfo.to_user);
+    this.updateSocketId(this.fromUserInfo.id);
+    this.$store.dispatch("groupInfoAction", this.toGroupInfo.groupId);
+    // this.$store.dispatch("roomListAction");
+    // this.$socket.emit("joined", this.fromUserInfo.id);
+  },
+  updated() {
+    this.scrollToBottom();
   },
 };
 </script>
-
 <style lang="scss" scoped>
-@import "../assets/chat.scss";
+.chat-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  header {
+    flex: 0;
+  }
+  .msg-list {
+    flex: 1;
+    overflow-y: scroll;
+  }
+  .input-form {
+    flex: 0;
+    width: 100%;
+  }
+}
 </style>

@@ -5,18 +5,15 @@ import Signup from "../views/Signup.vue";
 import Setting from "../views/Setting.vue";
 import UserInfo from "../views/UserInfo.vue";
 import RoomList from "../views/RoomList.vue";
-import Add from "../views/Add.vue";
-import AddSearch from "../views/AddSearch.vue";
 import PrivateChat from "../views/PrivateChat.vue";
-import News from "../views/News.vue";
-import NewsDetail from "../views/NewsDetail.vue";
+import GroupChat from "../views/GroupChat.vue";
+import PageNotFound from "../views/PageNotFound.vue";
 
 Vue.use(VueRouter);
 
 const routes = [
   {
     path: "/",
-    name: "Home",
     component: RoomList,
   },
   {
@@ -32,19 +29,12 @@ const routes = [
     component: RoomList,
   },
   {
-    //加人或进群
-    path: "/add",
-    component: Add,
+    path: "/private_chat/:user_id",
+    component: PrivateChat,
   },
   {
-    //搜人
-    path: "/add_search/user/:username",
-    component: AddSearch,
-  },
-  {
-    //搜群
-    path: "/add_search/group/:groupname",
-    component: AddSearch,
+    path: "/group_chat/:group_id",
+    component: GroupChat,
   },
   {
     path: "/setting",
@@ -54,20 +44,7 @@ const routes = [
     path: "/user_info/:user_id",
     component: UserInfo,
   },
-  {
-    //私聊
-    path: "/private_chat/:user_id",
-    component: PrivateChat,
-  },
-  {
-    path: "/news",
-    component: News,
-  },
-  {
-    path: "/newsdetail",
-    name: "newsdetail",
-    component: NewsDetail,
-  },
+  { path: "*", component: PageNotFound },
 ];
 
 const router = new VueRouter({
@@ -78,8 +55,6 @@ const router = new VueRouter({
 
 // router protect
 router.beforeEach((to, from, next) => {
-  console.log(localStorage);
-
   // 判斷是否有 token，是否登入
   if (localStorage.token) {
     // 判斷 token 是否過期

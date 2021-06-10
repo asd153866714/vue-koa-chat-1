@@ -1,15 +1,14 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const messageSchema = new Schema({
+const groupMessageSchema = new Schema({
   from: {
     type: Schema.Types.ObjectId,
     ref: "User",
-    required: true,
   },
   to: {
     type: Schema.Types.ObjectId,
-    ref: "User",
+    ref: "Group",
     required: true,
   },
   message: {
@@ -20,6 +19,9 @@ const messageSchema = new Schema({
     type: Number,
     required: true,
   },
+  fromSys: {
+    type: Boolean,
+  },
 });
 
-module.exports = mongoose.model("Message", messageSchema);
+module.exports = mongoose.model("GroupMessage", groupMessageSchema);

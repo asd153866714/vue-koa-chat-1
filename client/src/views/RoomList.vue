@@ -1,195 +1,144 @@
 <template>
-  <div class="wrapper">
-    <the-header :currentTab="currentTab"></the-header>
-    <div class="main">
-      <ul>
-        <li
-          v-for="data in msgListGetter"
-          :key="data.id"
-          @click="enterChat(data.type, data.id)"
+  <v-container class="grey lighten-3" style="height:100vh;">
+    <v-row no-gutters style="height:100%;">
+      <base-dialog
+        :type="dialog.type"
+        :show="dialog.show"
+        @closeDialog="closeDialog"
+        @updateRoomList="getRoomList"
+        @updateDialogStatus="updateDialogStatus"
+      ></base-dialog>
+      <v-col cols="12" md="4" style="height:100%">
+        <v-card
+          style="height:100%; display: flex; flex-direction: column;"
+          outlined
+          tile
         >
-          <a v-if="data.type === 'group'" href=""
-            ><img :src="data.group_avator" alt="群头像" class="img" /><span
-              class="group-unread"
-              v-if="data.unread"
-              >{{ data.unread }}</span
-            ></a
-          >
-          <a v-if="data.type === 'private'" href=""
-            ><img :src="data.avator" alt="用户头像" class="img" /><span
-              class="private-unread"
-              v-if="data.unread"
-              >{{ data.unread }}</span
-            ></a
-          >
-          <div class="content">
-            <div v-if="data.type === 'group'" class="title">
-              {{ data.group_name }}<span>{{ data.time }}</span>
-            </div>
-            <div v-if="data.type === 'private'" class="title">
-              {{ data.name }}<span>{{ data.time }}</span>
-            </div>
-            <div class="message">{{ data.message }}</div>
-          </div>
-        </li>
-      </ul>
-    </div>
-
-    <the-footer :currentTab="currentTab"></the-footer>
-  </div>
+          <the-left-header
+            @updateSearchStatus="updateSearchStatus"
+            @updateDialogStatus="updateDialogStatus"
+          ></the-left-header>
+          <left-room-list
+            :isSearching="isSearching"
+            :searchResult="searchResult"
+          ></left-room-list>
+        </v-card>
+      </v-col>
+      <v-col cols="12" md="8" class="hidden-sm-and-down" style="height:100%;">
+        <v-card class="chat-card" style="height:100%;" outlined tile>
+          <the-right-header></the-right-header>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
-
 <script>
 import { mapGetters } from "vuex";
-import axios from "axios";
-const token = localStorage.getItem("token");
 
 export default {
-  // name: 'message',
-  sockets: {
-    connect: function() {
-      console.log("socket to notification channel connected");
-    },
-  },
+  name: "RoomList",
   data() {
     return {
-      currentTab: 1,
+      roomList: [],
+      groupChatDetail: [],
+      inputMsg: "",
+      fromUserInfo: {},
+      toGroupInfo: {},
+      toUserInfo: {},
+      searchKeyword: "",
+      isSearching: false,
+      dialog: {
+        show: false,
+        type: "",
+        title: "",
+        content: "",
+      },
     };
   },
-  components: {},
   computed: {
-    ...mapGetters(["msgListGetter"]),
+    // ...mapGetters("roomListGetter"),
+    ...mapGetters({
+      searchResult: "searchResultGetter",
+    }),
   },
   methods: {
-    enterChat(chatType, chatId) {
-      const path =
-        chatType == "private"
-          ? `/private_chat/${chatId}`
-          : `/group_chat/${chatId}`;
-      this.$router.push(path);
-    },
     getRoomList() {
-      axios.get("http://localhost:3000/api/room_list", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      this.$store.dispatch("roomListAction");
+    },
+    updateSearchStatus(val) {
+      this.searchKeyword = val;
+      this.isSearching = val !== null && val !== "" ? true : false;
+      console.log("isSearching:", this.isSearching);
+      console.log("searchKeyword:", this.searchKeyword);
+      if (this.isSearching == true) {
+        // this.findPeople(val);
+        this.$store.dispatch("searchResultAction", val);
+      }
+    },
+    enterChat(type, chatId) {
+      let path;
+      this.isSearching = false;
+      this.searchKeyword = [];
+      if (type === "group") {
+        path = `/group_chat/${chatId}`;
+      } else if (type === "private") {
+        path = `/private_chat/${chatId}`;
+      }
+      if (path === this.$route.path) return;
+      this.$router.push({ path: path });
+    },
+    updateDialogStatus(data) {
+      console.log("updateDialogStatus:", data);
+      // this.dialog = data;
+      this.dialog.show = true;
+      this.dialog.type = data;
+      console.log(this.dialog);
+    },
+    closeDialog() {
+      this.dialog.show = false;
+    },
+    // 接收 socket.io 訊息
+    getMsgBySocket() {
+      this.$socket.on("getGroupMsg", () => {
+        this.getRoomList();
+      });
+      this.$socket.on("getPrivateMsg", () => {
+        this.getRoomList();
       });
     },
-    // 获取私聊和群的消息
-    getRoomListBySocket() {
-      // socket.removeAllListeners("getPrivateMsg");
-      // socket.removeAllListeners("getGroupMsg");
-      // socket.on("getPrivateMsg", (data) => {
-      //   console.log("首页获取私聊消息", data);
-      //   data.type = "private";
-      //   this.$store.commit("updateListMutation", data);
-      // });
-      // socket.on("getGroupMsg", (data) => {
-      //   console.log("首页获取群消息", data);
-      //   data.type = "group";
-      //   this.$store.commit("updateListMutation", data);
-      // });
+
+    updateSocketId(userId) {
+      console.log("updateSocketId");
+      this.$socket.emit("update", userId);
     },
   },
-  created() {
-    // if (this.$store.state.firstLoad) {
-    //   this.$store.dispatch("msgListAction");
-    //   this.$store.commit("firstLoadMutation", false);
-    // }
+  mounted() {
+    this.fromUserInfo = JSON.parse(localStorage.getItem("userInfo"));
     this.getRoomList();
-    // this.getRoomListBySocket();
+    this.getMsgBySocket();
+    this.updateSocketId(this.fromUserInfo.id);
   },
 };
 </script>
-
 <style lang="scss" scoped>
-.wrapper {
-  // height: 100vh;
-  // padding-top: 0.8rem;
-  .main {
-    height: 90%;
-    ul {
-      background-color: black;
-      background-repeat:no-repeat {
-        background-repeat: no-repeat;
-      }
-      background-attachment: fixed;
-      background-position: center;
-      background-size: cover;
-      // padding-bottom: 90%;
-      margin: auto;
-      li {
-        display: -webkit-box;
-        display: -ms-flexbox;
-        display: flex;
-        align-items: center;
-        margin: 0 0.2rem;
-        list-style-type: none;
-        a {
-          position: relative;
-          .img {
-            width: 0.8rem;
-            height: 0.8rem;
-            margin-right: 0.04rem;
-            border-radius: 50%;
-            display: inline-block;
-          }
-          span {
-            font-size: 0.2rem;
-            border-radius: 50%;
-            padding: 0 0.088rem;
-            position: absolute;
-            top: 0.2rem;
-            left: 0.7rem;
-            color: #fff;
-            z-index: 2;
-          }
-          .private-unread {
-            background-color: red;
-          }
-          .group-unread {
-            background-color: #98d1f2;
-          }
-          //  ::after {
-          //   content: "";
-          //   width: 0.26rem;
-          //   height: 0.26rem;
-          //   display: inline-block;
-          //   border-radius: 50%;
-          //   background-color: red;
-          //   position: absolute;
-          //   left: -0.08rem;
-          //   z-index: -1;
-          // }
-        }
-        .content {
-          display: inline-block;
-          margin-left: 0.2rem;
-          max-width: 80%;
-          .title {
-            font-size: 0.32rem;
-            span {
-              font-size: 0.28rem;
-              color: #676767;
-              position: absolute;
-              right: 0.5rem;
-            }
-          }
-          .message {
-            color: #676767;
-            font-size: 0.24rem;
-            max-height: 0.72rem;
-            overflow: hidden;
-            position: relative;
-          }
-          .message :after {
-            content: "...";
-            position: absolute;
-            bottom: 0;
-            right: 0;
-          }
-        }
-      }
+.chat-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  header {
+    flex: 0;
+  }
+  .msg-list {
+    flex: 1;
+    overflow-y: scroll;
+  }
+  .input-form {
+    flex: 0;
+    // position: absolute;
+    width: 100%;
+    // bottom: 0px;
+    .input-text-field {
+      // width: 100%;
     }
   }
 }
