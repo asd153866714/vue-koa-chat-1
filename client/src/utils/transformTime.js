@@ -1,18 +1,18 @@
+const moment = require("moment");
 /**
  *
  * @param     時間
  * @return    yyyy-MM-dd hh:mm 格式的時間
  */
 
+export const formatMessage = (message) => {
+  let timestamp = message.time;
+  message.time = moment(timestamp).format("YYYY/MM/DD hh:mm A");
+  return message;
+  // let date = moment(timestamp).format("YYYY/MM/DD hh:mm A");
+  // return date;
+};
 export const toNormalTime = (timestamp) => {
-  const date = new Date(timestamp * 1000),
-    Y = date.getFullYear() + "-",
-    M =
-      (date.getMonth() + 1 < 10
-        ? "0" + (date.getMonth() + 1)
-        : date.getMonth() + 1) + "-",
-    D = date.getDate() + " ",
-    h = date.getHours() + ":",
-    m = date.getMinutes();
-  return Y + M + D + h + m;
+  let date = moment(timestamp).format("YYYY/MM/DD hh:mm A");
+  return date;
 };

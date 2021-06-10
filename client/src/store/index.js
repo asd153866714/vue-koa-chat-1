@@ -1,5 +1,6 @@
 import Vue from "vue";
 import Vuex from "vuex";
+import router from "../router";
 import axios from "axios";
 import { toNormalTime } from "../utils/transformTime";
 
@@ -9,251 +10,161 @@ Vue.use(Vuex);
 
 const store = new Vuex.Store({
   state: {
-    firstLoad: true, //是否是第一次加载首页消息页面
-    robotmsg: [
-      // 机器人首语
-      {
-        message: "hi , 欢迎与我聊天，问我问题哦！",
-        user: "robot",
-      },
-    ],
-    msgList: [], // 消息首页列表
-    groupInfo: [], //群资料
-    groupMember: [], //群成员
-    toUserInfo: [], //私聊对方的资料
-    someOneInfo: {}, //某个用户的用户资料
-    addAsFriend: {
-      //加为好友
-      user_id: "", //请求方
-      other_user_id: "", //被请求方
-    },
-    newFriend: [], //新朋友列表
-    myInfo: {}, //我的信息
-    tabTips: {
-      //底部tab的未读提示 暂时只做好友添加请求的提示
-      addFriendReq: "", //是否有好友添加请求 0没有 1有
-    },
+    roomList: [],
+    searchResult: [],
+    groupInfo: {}, // 群組資訊
+    isGroupMember: true,
+    someOneInfo: {}, // 某個 user 的資訊
+    myInfo: {}, // 我的個人資訊
   },
   getters: {
-    robotMsgGetter: (state) => state.robotmsg,
-    msgListGetter: (state) => state.msgList,
-    updateListGetter: (state) => state.msgList,
-    groupInfoGetter: (state) => state.groupInfo,
-    groupMemberGetter: (state) => state.groupMember,
-    toUserInfoGetter: (state) => state.toUserInfo,
-    someOneInfoGetter: (state) => state.someOneInfo,
-    addAsFriendGetter: (state) => state.addAsFriend,
-    newFriendGetter: (state) => state.newFriend,
+    roomListGetter: (state) => state.roomList,
     myInfoGetter: (state) => state.myInfo,
-    tabTipsGetter: (state) => state.tabTips,
+    searchResultGetter: (state) => state.searchResult,
+    someOneInfoGetter: (state) => state.someOneInfo,
+    groupInfoGetter: (state) => state.groupInfo,
+    isGroupMemberGetter: (state) => state.isGroupMember,
+    toUserInfoGetter: (state) => state.toUserInfo,
   },
   mutations: {
-    //是否是第一次加载首页消息页面
-    firstLoadMutation(state, data) {
-      state.firstLoad = data;
+    roomListMutation(state, data) {
+      state.roomList = data;
     },
-    //机器人消息
-    robotMsgMutation(state, data) {
-      state.robotmsg.push(data);
+    searchResultMutation(state, data) {
+      state.searchResult = data;
+      console.log("search mutation:", state.searchResult);
     },
-    //我的信息
+    // 我的個人資料
     myInfoMutation(state, data) {
       state.myInfo = data;
     },
-    //首页消息列表
-    msgListMutation(state, data) {
-      state.msgList = data;
-    },
-    //未读信息归零
-    resetUnredMutation(state, id) {
-      state.msgList.forEach((ele) => {
-        if (ele.id == id) {
-          ele.unread = null;
-        }
-      });
-    },
-    //是否有好友添加请求
-    friendReqTipsMutation(state, data) {
-      if (data) {
-        state.tabTips.addFriendReq = "tips";
-      } else {
-        state.tabTips.addFriendReq = "";
-      }
-    },
-    //更新首页消息列表
-    updateListMutation(state, data) {
-      let unread = 0;
-      data.time = toNormalTime(data.time);
-      //添加
-      if (data.action === "push") {
-        data.unread = unread + 1;
-        state.msgList.push(data);
-        return;
-      }
-      //删除
-      if (data.action === "delete") {
-        for (var i = 0; i < state.msgList.length; i++) {
-          if (state.msgList[i].id == data.id) {
-            state.msgList.splice(i, 1);
-          }
-        }
-        return;
-      }
-      //替换更新
-      if (data.type === "private") {
-        //在请求添加好友的情况下
-        let haveThisEle = state.msgList.filter(
-          (ele) => ele.other_user_id == data.from_user
-        );
-        if (haveThisEle.length === 0 && data.action === "request") {
-          data.unread = unread + 1;
-          data.other_user_id = data.from_user;
-          data.id = data.from_user;
-          delete data.from_user;
-          delete data.to_user;
-          state.msgList.push(data);
-          return;
-        }
-        //正常私聊情况下
-        state.msgList.forEach((ele) => {
-          //判断是哪个人  对方发的
-          if (ele.other_user_id == data.from_user) {
-            ele.message = data.name + " : " + data.message;
-            ele.time = data.time;
-            ele.name = data.name;
-            ele.avator = data.avator;
-            //如果是当前的聊天，没必要加未读标识了
-            if (data.chatOfNow) return;
-            //增加未读消息数
-            if (!ele.unread) {
-              ele.unread = unread + 1;
-            } else {
-              ele.unread += 1;
-            }
-          } else if (ele.other_user_id == data.to_user) {
-            //自己发的
-            ele.message = data.name + " : " + data.message;
-            ele.time = data.time;
-          }
-        });
-      } else if (data.type === "group") {
-        state.msgList.forEach((ele) => {
-          //判断是哪个群
-          if (ele.group_id == data.groupId) {
-            ele.message = data.name + " : " + data.message;
-            ele.time = data.time;
-            ele.group_name = data.group_name;
-            ele.group_avator = data.group_avator;
-            ele.id = data.groupId;
-            //增加未读消息数
-            if (data.chatOfNow) {
-              ele.unread = null;
-            } else {
-              if (!ele.unread) {
-                ele.unread = unread + 1;
-              } else {
-                ele.unread += 1;
-              }
-            }
-          }
-        });
-      }
-      // }
-    },
-    //群资料
+    // 群組資訊
     groupInfoMutation(state, data) {
       state.groupInfo = data;
     },
-    //群成员
-    groupMemberMutation(state, data) {
-      state.groupMember = data;
+    isGroupMemberMutation(state, data) {
+      state.isGroupMember = data;
     },
-    //私聊对方的用户资料
-    toUserInfoMutation(state, data) {
-      state.toUserInfo = data;
-    },
-    //用户资料
+    // 某個 user 的資訊
     someOneInfoMutation(state, data) {
       state.someOneInfo = data;
     },
-    //添加好友
-    addAsFriendMutation(state, data) {
-      state.addAsFriend = data;
-    },
-    //新朋友列表
-    newFriendMutation(state, data) {
-      state.newFriend = data;
-    },
   },
   actions: {
-    //机器人
-    robotMsgAction({ commit }, data) {
-      // console.log(data + "  robotMsgAction");
-      axios
-        .get("/api/v1/robot", {
-          params: data,
-        })
-        .then((res) => {
-          if (res) {
-            if (res.data.data.code === 100000) {
-              commit("robotMsgMutation", {
-                message: res.data.data.text,
-                user: "robot",
-              });
-            } else if (res.data.data.code === 200000) {
-              let data = res.data.data.text + res.data.data.url;
-              commit("robotMsgMutation", {
-                message: data,
-                user: "robot",
-              });
-            } else if (res.data.data.code === 302000) {
-              commit("robotMsgMutation", {
-                message: "暂不支持此类对话",
-                user: "robot",
-              });
-            } else {
-              commit("robotMsgMutation", {
-                message: "暂不支持此类对话",
-                user: "robot",
-              });
-            }
-          }
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+    // 登出
+    logoutAction() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("userInfo");
+      localStorage.removeItem("expire");
+      router.push("/login");
     },
-    // 消息首页列表
-    async msgListAction({ commit }) {
-      // console.log('msgListAction')
-      const res = await axios.get("/api/message_list");
-      console.log("res", res);
-      if (res.data.success) {
-        const groupList = res.data.data.groupList;
-        const privateList = res.data.data.privateList;
-        groupList.forEach((element) => {
-          element.type = "group";
-          element.time = element.time
-            ? toNormalTime(element.time)
-            : toNormalTime(element.creater_time);
-          element.id = element.group_id;
+    // 取得左側聊天室列表
+    async roomListAction({ commit }) {
+      console.log("getRoomListAction");
+      const token = localStorage.getItem("token");
+      const res = await axios.get("http://localhost:3000/api/room_list", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.status == 200) {
+        console.log("VUEX dispatch RoomListAction");
+        let roomList = res.data.roomList;
+        roomList.forEach((e) => {
+          e.messageInfo.time = toNormalTime(e.messageInfo.time);
         });
-        privateList.forEach((element) => {
-          element.type = "private";
-          element.time = element.time
-            ? toNormalTime(element.time)
-            : toNormalTime(element.be_friend_time);
-          element.id = element.other_user_id;
-          // element.unread = 0;
-        });
-        const allMsgList = groupList.concat(privateList);
-        allMsgList.sort((a, b) => {
-          return b.time - a.time;
-        });
-        commit("msgListMutation", allMsgList);
+        // const groupList = res.data.groupList;
+        // const privateList = res.data.privateList;
+        // groupList.forEach((e) => {
+        //   e.type = "group";
+        //   // e.messageId.time = toNormalTime(e.messageId.time);
+        // });
+        // privateList.forEach((e) => {
+        //   e.type = "private";
+        //   // e.messageId.time = toNormalTime(e.messageId.time);
+        // });
+
+        // const roomList = groupList.concat(privateList);
+
+        // roomList.sort((a, b) => {
+        //   return b.messageId.time - a.messageId.time;
+        // });
+
+        // roomList.forEach((e) => {
+        //   e.messageId.time = toNormalTime(e.messageId.time);
+        // });
+        console.log("VUEX roomList:", roomList);
+
+        commit("roomListMutation", roomList);
       }
     },
-    //某个用户的用户资料
+    // 取得搜尋結果
+    async searchResultAction({ commit }, keyword) {
+      const token = localStorage.getItem("token");
+      const res = await axios.get("http://localhost:3000/api/search_by_name", {
+        params: {
+          name: keyword,
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.status === 200) {
+        const searchResult = res.data.searchResult;
+        console.log("VUEX search result:", searchResult);
+
+        commit("searchResultMutation", searchResult);
+      }
+    },
+    // 取得群組資訊
+    async groupInfoAction({ commit }, group_id) {
+      const token = localStorage.getItem("token");
+      const userId = JSON.parse(localStorage.getItem("userInfo")).id;
+      const res = await axios.get("http://localhost:3000/api/group_info", {
+        params: {
+          groupId: group_id,
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.status === 200) {
+        const groupInfo = res.data.groupInfo;
+        console.log("VUEX groupInfo:", groupInfo);
+        commit("groupInfoMutation", groupInfo);
+        // 判斷是否是群組成員
+        let isGroupMember = groupInfo.members.includes(userId);
+        console.log("Vuex isGroupMember", isGroupMember);
+        commit("isGroupMemberMutation", isGroupMember);
+      }
+    },
+    // 加入群組
+    async joinGroupAction(context, payload) {
+      // console.log("VUEX joinGroup", userId, groupId);
+      const token = localStorage.getItem("token");
+      const res = await axios.post(
+        "http://localhost:3000/api/join_group",
+        {
+          userId: payload.userId,
+          groupId: payload.groupId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (res.status === 200) {
+        console.log(res);
+        // const groupInfo = res.data.groupInfo;
+        this.$socket.emit("joinGroup");
+        // 更新 room list
+        // store.dispatch("roomListAction")
+      }
+    },
+    //某个 user 的資料
     async someOneInfoAction({ commit }, user_id) {
       // console.log("user_id666", user_id);
       const res = await axios.get("http://localhost:3000/api/user_info", {
@@ -266,13 +177,6 @@ const store = new Vuex.Store({
       });
       commit("someOneInfoMutation", res.data.userInfo);
     },
-    //获取新朋友列表
-    // async newFriendAction({ commit }, user_id) {
-    //   // console.log("user_id666", user_id);
-    //   const res = await axios.get("/api/v1/get_newfriends");
-    //   // console.log('newFriendAction', res)
-    //   commit("newFriendMutation", res.data.data.newFriends);
-    // },
   },
 });
 export default store;

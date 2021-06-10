@@ -11,20 +11,15 @@ const MONGODB_URI =
 
 const app = new Koa();
 
+// init socket.io
 const server = require("http").createServer(app.callback());
-const io = require("socket.io")(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  },
-});
-const socketCtrl = require("./controllers/socket");
+const socketIoConfig = require("./socket");
+socketIoConfig.init(server);
 
 // init middleware
 app.use(koaBody());
 app.use(koaLogger());
-
+// set CORS
 app.use(
   cors({
     origin: function (ctx) {
@@ -39,59 +34,8 @@ app.use(
 );
 
 // init routes
-const authRoutes = require("./routes/auth");
-app.use(authRoutes.routes());
-
-// init socket.io
-let users = [];
-
-io.on("connection", (socket) => {
-  console.log("connected");
-  const socketId = socket.id;
-
-  // login
-  socket.on("login", async (userId) => {
-    await socketCtrl.saveUserSocketId(userId, socketId);
-  });
-  // update socketId
-  socket.on("update", async (userId) => {
-    console.log("HAHAHA: ", userId);
-    console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    await socketCtrl.saveUserSocketId(userId, socketId);
-  });
-  // private chat
-  socket.on("sendPrivateMsg", async (data) => {
-    console.log(data);
-    console.log(socket.id);
-    const toUserSocketId = await socketCtrl.getUserSocketId(data.to_user);
-    console.log("toUserSocketId: ", toUserSocketId);
-    io.to(toUserSocketId).emit("getPrivateMsg", data);
-  });
-  // group chat
-  // socket.on("sendGroupMsg", async (data) => {
-  //   io.sockets.emit("getGroupMsg", data);
-  // });
-
-  // add friend request
-  socket.on("sendRequest", async (data) => {
-    console.log("sendRequest", data);
-    const arr = await socketCtrl.getUserSocketId(data.to_user);
-    const toUserSocketId = await socketCtrl.getUserSocketId(data.to_user);
-    io.to(toUserSocketId).emit("getResponse", data);
-    // const RowDataPacket = arr[0];
-    // const socketId = JSON.parse(JSON.stringify(RowDataPacket)).socketId;
-    // console.log("给谁的socketId", socketId);
-    // io.to(socketId).emit("getresponse", data);
-  });
-
-  socket.on("disconnect", () => {
-    console.log("disconnected");
-    const user = users.find((user) => user.id === socket.id);
-    const index = users.indexOf(user);
-    users.splice(index, 1);
-    // console.log(users);
-  });
-});
+const Routes = require("./routes/index.js");
+app.use(Routes.routes());
 
 // connect to mongodb
 mongoose.connect(`${MONGODB_URI}`, {

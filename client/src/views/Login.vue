@@ -100,6 +100,7 @@ export default {
               );
               // 設置 token 時效，毫秒為單位
               localStorage.setItem("expire", res.data.expire);
+              console.log(res.data.expire);
               //弹窗
               this.messageBox.messageBoxEvent = "login";
               this.messageBox.visible = true;

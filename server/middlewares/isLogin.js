@@ -8,9 +8,9 @@ module.exports = async (ctx, next) => {
   }
   const token = authHeader.split(" ")[1];
   let decodedToken;
-  console.log("測試請求 token 欄位：", token);
+  // console.log("測試請求 token 欄位：", token);
   decodedToken = jwt.verify(token, secret);
-  console.log("JWT Token:", decodedToken);
+  // console.log("JWT Token:", decodedToken);
   // try {
   //   decodedToken = jwt.verify(token, secret);
   // } catch (error) {

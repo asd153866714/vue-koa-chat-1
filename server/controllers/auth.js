@@ -2,19 +2,25 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const secret = require("../config.js").secret;
+const avatarUtil = require("../utils/avatar");
 
 class authController {
   postSignup = async (ctx) => {
     console.log(ctx.request.body);
-    let { name, password } = ctx.request.body;
+    const { name, password } = ctx.request.body;
+    const randomColor = avatarUtil.createRandomColor();
+    const avatarName = avatarUtil.CreateRandomAvatarName(name, "user");
     try {
-      let hasUser = await User.findOne({ name, name });
+      let hasUser = await User.findOne({ name: name });
       if (hasUser) {
         ctx.throw(400, "Username has been use!");
       }
       let newUser = await new User({
         name: name,
         password: bcrypt.hashSync(password, 12),
+        avatarName: avatarName,
+        avatarColor: randomColor,
+        groups: [],
       }).save();
 
       ctx.status = 201;
@@ -40,18 +46,19 @@ class authController {
             userId: hasUser._id.toString(),
           },
           secret,
-          { expiresIn: "1h" }
+          { expiresIn: "30d" }
         );
 
         ctx.status = 200;
         ctx.body = {
           message: "Login success.",
           token: token.toString(),
-          expire: new Date().getTime() + 3600 * 1000,
+          expire: new Date().getTime() + 3600 * 24 * 30 * 1000,
           userInfo: {
             name: hasUser.name,
             id: hasUser._id,
-            socketId: hasUser.sockedId,
+            avatarColor: hasUser.avatarColor,
+            avatarName: hasUser.avatarName,
           },
         };
       } else {

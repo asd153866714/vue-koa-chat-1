@@ -15,6 +15,21 @@ const userSchema = new Schema({
     default: "",
     required: false,
   },
+  avatarColor: {
+    type: String,
+    required: true,
+  },
+  avatarName: {
+    type: String,
+    required: true,
+  },
+  groups: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Group",
+      required: true,
+    },
+  ],
 });
 
 module.exports = mongoose.model("User", userSchema);
