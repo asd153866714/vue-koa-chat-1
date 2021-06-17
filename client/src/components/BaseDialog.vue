@@ -62,7 +62,7 @@
   <div v-else-if="type === `setting`">
     <v-dialog v-model="show" width="500" persistent>
       <v-card>
-        <v-img class="white--text" height="200px" :src="settingImgSrc[0]">
+        <v-img class="white--text blue" height="150px">
           <v-app-bar flat color="rgba(0, 0, 0, 0)">
             <v-toolbar-title class="text-h6 white--text pl-0">
               設定
@@ -84,7 +84,7 @@
           </v-app-bar>
 
           <v-card-title class="">
-            <v-avatar size="60" color="green">
+            <v-avatar size="60" :color="myInfo.avatarColor">
               <span class="white--text title">
                 {{ myInfo.avatarName }}
               </span>
@@ -260,7 +260,7 @@ export default {
 
       axios
         .post(
-          "http://localhost:3000/api/create_group",
+          `${process.env.VUE_APP_API}/api/create_group`,
           {
             name: this.inputGroupName,
           },

@@ -1,10 +1,5 @@
 <template>
-  <!--  注册 -->
   <div class="login">
-    <message
-      :type="this.message.type"
-      :message="this.message.message"
-    ></message>
     <message-box
       :visible="this.messageBox.visible"
       :messageBoxEvent="this.messageBox.messageBoxEvent"
@@ -14,6 +9,12 @@
       <p slot="content">{{ this.messageBox.message }}</p>
     </message-box>
     <div class="wrapper fadeInDown">
+      <base-alert
+        :isShow="this.alert.isShow"
+        :message="this.alert.message"
+        :type="this.alert.type"
+      ></base-alert>
+
       <div id="formContent">
         <router-link to="/login">
           <h2 class="inactive">登入</h2>
@@ -41,7 +42,7 @@
             placeholder="帳號"
           />
           <br />
-          <label v-if="!nameHasUse" style="color: red; font-size:0.65rem;"
+          <label v-show="!nameHasUse" style="color: red; font-size:0.65rem;"
             >帳號名稱已被使用</label
           >
           <input
@@ -86,6 +87,9 @@
             style="color: red; border: 1px solid red"
           />
           <br />
+          <label v-if="passwordConfirm" style="color: gray; font-size:0.65rem;"
+            >請輸入相同密碼</label
+          >
           <label v-if="!passwordConfirm" style="color: red; font-size:0.65rem;"
             >確認密碼錯誤</label
           >
@@ -117,19 +121,33 @@ export default {
       confirm_password: "",
       passwordConfirm: true,
       nameHasUse: true,
-      message: {
+      alert: {
+        isShow: false,
         type: "",
         message: "",
       },
       messageBox: {
         visible: false,
-        message: "", //弹窗内容
-        hasCancel: true, //弹窗是否有取消键
-        messageBoxEvent: "", // 弹窗事件名称
+        message: "",
+        hasCancel: true,
+        messageBoxEvent: "",
       },
     };
   },
   methods: {
+    showAlert(type, message) {
+      this.alert = {
+        isShow: true,
+        type: type,
+        message: message,
+      };
+      // 幾秒後自動關閉
+      let self = this;
+      console.log(self);
+      window.setTimeout(function() {
+        self.alert.isShow = false;
+      }, 2000);
+    },
     register() {
       if (
         this.name !== "" &&
@@ -138,46 +156,26 @@ export default {
       ) {
         if (this.isPassword == true && this.passwordConfirm == true) {
           axios
-            .post("http://localhost:3000/api/auth/signup", {
+            .post(`${process.env.VUE_APP_API}/api/auth/signup`, {
               name: this.name,
               password: this.password,
             })
 
             .then((res) => {
               console.log(res);
-              if (res) {
-                if (res.status === 201) {
-                  //弹窗
-                  this.passwordConfirm = true;
-                  this.messageBox.messageBoxEvent = "register";
-                  this.messageBox.visible = true;
-                  this.messageBox.message = "您已註冊成功";
-                } else {
-                  // this.$message({
-                  //   message: res.data.message,
-                  //   type: "error",
-                  // });
-                }
+              if (res.status === 201) {
+                this.passwordConfirm = true;
+                this.messageBox.messageBoxEvent = "register";
+                this.messageBox.visible = true;
+                this.messageBox.message = "您已註冊成功";
               }
             })
             .catch((err) => {
-              console.log(err);
-              console.log(err.response);
-              this.message.type = "error";
-              this.message.message = err.response.data;
-              this.nameHasUse = false;
-              // this.$message({
-              //   message: "服务器出错啦",
-              //   type: "error",
-              // });
+              this.showAlert("error", err.response.data);
             });
         }
       } else {
-        // const message = this.name === "" ? "请输入用户名" : "请输入密码";
-        // this.$message({
-        //   message: message,
-        //   type: "warn",
-        // });
+        this.showAlert("error", "帳號密碼不能為空白");
       }
     },
     validatePassword() {
