@@ -4,10 +4,9 @@ import router from "./router";
 import store from "./store";
 import vuetify from "./plugins/vuetify";
 import socket from "./socket.js";
-import Message from "./components/Message.vue";
+import BaseAlert from "./components/BaseAlert.vue";
 import MessageBox from "./components/MessageBox.vue";
 import ChatItem from "./components/ChatItem.vue";
-import Avatar from "./components/TheAvatar.vue";
 import TheLeftHeader from "./components/TheLeftHeader.vue";
 import TheRightHeader from "./components/TheRightHeader.vue";
 import BaseDialog from "./components/BaseDialog.vue";
@@ -17,10 +16,9 @@ Vue.config.productionTip = false;
 
 Vue.component("the-left-header", TheLeftHeader);
 Vue.component("the-right-header", TheRightHeader);
-Vue.component("message", Message);
+Vue.component("base-alert", BaseAlert);
 Vue.component("message-box", MessageBox);
 Vue.component("chat-item", ChatItem);
-Vue.component("the-avatar", Avatar);
 Vue.component("base-dialog", BaseDialog);
 Vue.component("left-room-list", LeftRoomList);
 

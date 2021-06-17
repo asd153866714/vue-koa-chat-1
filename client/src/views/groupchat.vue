@@ -53,7 +53,9 @@
                     >{{ item.from.name }}</v-list-item-title
                   >
                   <v-card color="rounded-xl rounded-tl-0" outlined>
-                    <v-card-text class="text-body-1">
+                    <v-card-text
+                      class="text-body-1 black--text font-weight-regular"
+                    >
                       {{ item.message }}
                     </v-card-text>
                   </v-card>
@@ -76,7 +78,7 @@
               outlined
               class="input-textarea"
               name="input-7-4"
-              label="Outlined textarea"
+              label="textarea"
               hide-details="auto"
               rows="1"
               prepend-icon="mdi-paperclip"
@@ -192,7 +194,7 @@ export default {
     async getGroupMsg(toGroupId) {
       const token = localStorage.getItem("token");
       axios
-        .get("http://localhost:3000/api/group_detail", {
+        .get(`${process.env.VUE_APP_API}/api/group_detail`, {
           params: {
             toGroupId: toGroupId,
           },
@@ -273,7 +275,7 @@ export default {
       let groupId = this.toGroupInfo.groupId;
       axios
         .post(
-          "http://localhost:3000/api/join_group",
+          `${process.env.VUE_APP_API}/api/join_group`,
           {
             userId: userId,
             groupId: groupId,

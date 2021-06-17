@@ -62,7 +62,7 @@ const store = new Vuex.Store({
     async roomListAction({ commit }) {
       console.log("getRoomListAction");
       const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:3000/api/room_list", {
+      const res = await axios.get(`${process.env.VUE_APP_API}/api/room_list`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -102,14 +102,17 @@ const store = new Vuex.Store({
     // 取得搜尋結果
     async searchResultAction({ commit }, keyword) {
       const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:3000/api/search_by_name", {
-        params: {
-          name: keyword,
-        },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await axios.get(
+        `${process.env.VUE_APP_API}/api/search_by_name`,
+        {
+          params: {
+            name: keyword,
+          },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (res.status === 200) {
         const searchResult = res.data.searchResult;
@@ -122,7 +125,7 @@ const store = new Vuex.Store({
     async groupInfoAction({ commit }, group_id) {
       const token = localStorage.getItem("token");
       const userId = JSON.parse(localStorage.getItem("userInfo")).id;
-      const res = await axios.get("http://localhost:3000/api/group_info", {
+      const res = await axios.get(`${process.env.VUE_APP_API}/api/group_info`, {
         params: {
           groupId: group_id,
         },
@@ -145,7 +148,7 @@ const store = new Vuex.Store({
       // console.log("VUEX joinGroup", userId, groupId);
       const token = localStorage.getItem("token");
       const res = await axios.post(
-        "http://localhost:3000/api/join_group",
+        `${process.env.VUE_APP_API}/api/join_group`,
         {
           userId: payload.userId,
           groupId: payload.groupId,
@@ -164,10 +167,10 @@ const store = new Vuex.Store({
         // store.dispatch("roomListAction")
       }
     },
-    //某个 user 的資料
+    // 某個 user 的資料
     async someOneInfoAction({ commit }, user_id) {
       // console.log("user_id666", user_id);
-      const res = await axios.get("http://localhost:3000/api/user_info", {
+      const res = await axios.get(`${process.env.VUE_APP_API}/api/user_info`, {
         params: {
           id: user_id,
         },

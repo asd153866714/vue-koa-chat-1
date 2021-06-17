@@ -31,7 +31,7 @@
             :roomName="someOneInfoGetter.name"
           ></the-right-header>
           <div class="msg-list" ref="messages">
-            <v-list subheader>
+            <v-list>
               <v-list-item
                 v-for="item in privateChatDetail"
                 :key="item._id"
@@ -55,10 +55,12 @@
                     >{{ item.from.name }}</v-list-item-title
                   >
                   <v-card
-                    color="light-blue lighten-5 rounded-xl rounded-tl-0"
+                    color="light-blue lighten-4 rounded-xl rounded-tl-0"
                     outlined
                   >
-                    <v-card-text class="text-body-1">
+                    <v-card-text
+                      class="text-body-1 black--text font-weight-regular"
+                    >
                       {{ item.message }}
                     </v-card-text>
                   </v-card>
@@ -78,7 +80,7 @@
               outlined
               class="input-textarea"
               name="input-7-4"
-              label="Outlined textarea"
+              label="textarea"
               hide-details="auto"
               rows="1"
               prepend-icon="mdi-paperclip"
@@ -175,7 +177,7 @@ export default {
       const token = localStorage.getItem("token");
 
       axios
-        .get("http://localhost:3000/api/private_detail", {
+        .get(`${process.env.VUE_APP_API}/api/private_detail`, {
           params: {
             toUserId: this.$route.params.user_id,
             // from_user: this.fromUserInfo.user_id
@@ -244,9 +246,12 @@ export default {
     // 接收 socket.io 訊息
     getMsgBySocket() {
       this.$socket.on("getPrivateMsg", (data) => {
-        console.log("sockets getPrivateMsg");
-        if (data.from) {
-          this.getRoomList();
+        console.log("sockets getPrivateMsg", data);
+        this.getRoomList();
+        if (
+          data.to == this.toUserInfo.userId ||
+          data.to == this.fromUserInfo.id
+        ) {
           console.log(data);
           data.time = toNormalTime(data.time);
           this.privateChatDetail.push(data);
@@ -275,6 +280,7 @@ export default {
     this.updateSocketId(this.fromUserInfo.id);
     this.$store.dispatch("someOneInfoAction", this.toUserInfo.userId);
     this.$store.dispatch("roomListAction");
+    console.log(process.env);
   },
   updated() {
     this.scrollToBottom();

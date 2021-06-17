@@ -1,3 +1,4 @@
 import { io } from "socket.io-client";
-const socket = io.connect("http://localhost:3000");
+const socket = io.connect(process.env.VUE_APP_API);
+console.log("process.env:", process.env);
 export default socket;

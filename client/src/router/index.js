@@ -2,8 +2,6 @@ import Vue from "vue";
 import VueRouter from "vue-router";
 import Login from "../views/Login.vue";
 import Signup from "../views/Signup.vue";
-import Setting from "../views/Setting.vue";
-import UserInfo from "../views/UserInfo.vue";
 import RoomList from "../views/RoomList.vue";
 import PrivateChat from "../views/PrivateChat.vue";
 import GroupChat from "../views/GroupChat.vue";
@@ -35,14 +33,6 @@ const routes = [
   {
     path: "/group_chat/:group_id",
     component: GroupChat,
-  },
-  {
-    path: "/setting",
-    component: Setting,
-  },
-  {
-    path: "/user_info/:user_id",
-    component: UserInfo,
   },
   { path: "*", component: PageNotFound },
 ];
