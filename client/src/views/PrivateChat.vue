@@ -243,14 +243,21 @@ export default {
           console.log("save1");
         });
     },
-    // 接收 socket.io 訊息
+    /**
+     * 接收 socket.io 訊息
+     * 假設 from = a, to = b，Server 會 emit 兩個接收訊息的事件，一個給 a，一個給 b，
+     * 因為要更新 room list，所以 b 不管在 room a 還是 room c 都會收到事件，但是只有在 room a 才會顯示訊息
+     * 所以要判斷 room 和 data 的關係，確認 b 對 a 的聊天室只會顯示 a -> b 或 b -> a 的訊息。
+     */
     getMsgBySocket() {
       this.$socket.on("getPrivateMsg", (data) => {
         console.log("sockets getPrivateMsg", data);
         this.getRoomList();
         if (
-          data.to == this.toUserInfo.userId ||
-          data.to == this.fromUserInfo.id
+          (data.from._id === this.toUserInfo.userId &&
+            data.to === this.fromUserInfo.id) ||
+          (data.from._id === this.fromUserInfo.id &&
+            data.to === this.toUserInfo.userId)
         ) {
           console.log(data);
           data.time = toNormalTime(data.time);

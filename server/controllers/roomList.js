@@ -2,6 +2,7 @@
 const PrivateLatest = require("../models/privateLatest");
 const GroupLatest = require("../models/groupLatest");
 const User = require("../models/user");
+const mongoose = require("mongoose");
 
 let getRoomList = async (ctx) => {
   try {
@@ -9,7 +10,7 @@ let getRoomList = async (ctx) => {
     let privateChatList = await PrivateLatest.aggregate([
       {
         $match: {
-          userId: userId,
+          userId: new mongoose.Types.ObjectId(userId),
         },
       },
       {
@@ -50,7 +51,7 @@ let getRoomList = async (ctx) => {
         },
       },
     ]);
-    // console.log("privateChatList:", privateChatList);
+    console.log("privateChatList:", privateChatList);
 
     // 查詢 User Model 的 groups 陣列
     let UserInfo = await User.findOne({ _id: userId }).select("groups");
