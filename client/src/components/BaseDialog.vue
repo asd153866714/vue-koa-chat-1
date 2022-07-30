@@ -136,7 +136,7 @@
           <v-btn color="primary" text @click="tryClose">
             取消
           </v-btn>
-          <v-btn color="primary" text @click="confimLogout">
+          <v-btn color="primary" text @click="confirmLogout">
             確定
           </v-btn>
         </v-card-actions>
@@ -294,7 +294,7 @@ export default {
       let data = "tryLogout";
       this.$emit("updateDialogStatus", data);
     },
-    confimLogout() {
+    confirmLogout() {
       this.tryClose();
       this.$store.dispatch("logoutAction");
     },
